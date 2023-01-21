@@ -1,0 +1,11 @@
+torch
+torchvision
+tensorboard
+scipy
+wget
+pandas
+torch-summary
+matplotlib
+tqdm
+wandb
+
