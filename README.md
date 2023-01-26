@@ -1,6 +1,8 @@
 # subspace-configurable-networks
 
-This is the code to train SCN models and all baselines for the 2D transformations used in the paper. We used Python 3.7.7
+The provided code was used to train SCN models and all baselines for the 2D transformations used in the paper 'Subspace-Configurable Networks'. 
+
+We used Python 3.7.7
 
 Install dependencies:
 ```
