@@ -47,8 +47,8 @@ python rotation_plot.py
 ```
 Sample output is stores in the `figs` folder and is sorted by the transformation applied. We provide sample generated images visualizing the accuracy of SCNs for 2D rotation.
 
-![SCN accuracy](./figs/rotation/viz_acc_mlpb_FashionMNIST_1_32.png "SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units")
+<img src="./figs/rotation/viz_acc_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units" width="200"/>
 
-![SCN accuracy, aggregated view](./figs/rotation/d_mlpb_FashionMNIST_1_32.png "SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units, aggregated view") 
+<img src="./figs/rotation/d_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units, aggregated view" width="200"/>
 
-![SCN beta-space](./figs/rotation/viz_beta_mlpb_FashionMNIST_1_32.png "SCN beta-space, D=1..8, 1-layer MLP with 32 hidden units")
+<img src="./figs/rotation/viz_beta_mlpb_FashionMNIST_1_32.png" alt="SCN beta-space, D=1..8, 1-layer MLP with 32 hidden units" width="800"/>
