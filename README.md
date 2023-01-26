@@ -47,8 +47,11 @@ python rotation_plot.py
 ```
 Sample output is stores in the `figs` folder and is sorted by the transformation applied. We provide sample generated images visualizing the accuracy of SCNs for 2D rotation.
 
-<img src="./figs/rotation/viz_acc_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units" width="200"/>
+SCN accuracy for different D as a function of the input parameter alpha (=rotation angle):
+<img src="./figs/rotation/viz_acc_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units" width="300"/>
 
-<img src="./figs/rotation/d_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units, aggregated view" width="200"/>
+SCN accuracy for different D, aggregated view for different D. Each violin comprises accuracies for all alphas sweeped with a discretization step of 1 degree:
+<img src="./figs/rotation/d_mlpb_FashionMNIST_1_32.png" alt="SCN accuracy, D=1..8, 1-layer MLP with 32 hidden units, aggregated view" width="300"/>
 
+SCN beta-space as a function of the input parameter alpha given as (cos(alpha), sin(alpha)).
 <img src="./figs/rotation/viz_beta_mlpb_FashionMNIST_1_32.png" alt="SCN beta-space, D=1..8, 1-layer MLP with 32 hidden units" width="800"/>
