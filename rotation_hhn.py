@@ -16,11 +16,11 @@ import wandb
 os.environ["WANDB_API_KEY"] = ""
 
 parser = argparse.ArgumentParser(description='SCN Project')
-parser.add_argument('--dataset', default='CIFAR10', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
+parser.add_argument('--dataset', default='FashionMNIST', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
 parser.add_argument('--datadir', default='datasets', type=str)
 parser.add_argument('--batchsize', default=64, type=int)
 parser.add_argument('--save-dir', dest='save_dir', default='save_temp', type=str)
-parser.add_argument('--arch', '-a', metavar='ARCH', default='mlp')
+parser.add_argument('--arch', '-a', metavar='ARCH', default='hhnmlpb')
 parser.add_argument('--nlayers', default=1, type=int)
 parser.add_argument('--width', default=32, type=int)
 parser.add_argument('--epochs', default=10, type=int)
@@ -62,7 +62,7 @@ def main():
 
     ######## train model
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=0)
 #    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=25, T_mult=25)
 

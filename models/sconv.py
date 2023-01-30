@@ -91,9 +91,9 @@ class SConvB(nn.Module):
 
 
 ######## SCN-SConv no bias
-class SCN_SConv(nn.Module):
+class HHN_SConv(nn.Module):
     def __init__(self, hin, dimensions, n_layers, n_units, n_channels, n_classes=10):
-        super(SCN_SConv, self).__init__()
+        super(HHN_SConv, self).__init__()
         self.hyper_stack = nn.Sequential(
             nn.Linear(hin, 64),
             nn.ReLU(),
@@ -172,9 +172,9 @@ class SCN_SConv(nn.Module):
 
 
 ######## SCN-SConv with bias
-class SCN_SConvB(nn.Module):
+class HHN_SConvB(nn.Module):
     def __init__(self, hin, dimensions, n_layers, n_units, n_channels, n_classes=10):
-        super(SCN_SConvB, self).__init__()
+        super(HHN_SConvB, self).__init__()
         self.hyper_stack = nn.Sequential(
             nn.Linear(hin, 64),
             nn.ReLU(),

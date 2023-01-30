@@ -13,9 +13,9 @@ from typing import List
 
 
 ######## SCN Conv+Dense
-class SCNConvDense(nn.Module):
+class HHNConvDense(nn.Module):
     def __init__(self, dimensions, n_layers, n_units, n_channels, n_classes=10):
-        super(SCNConvDense, self).__init__()
+        super(HHNConvDense, self).__init__()
         self.hyper_stack = nn.Sequential(
             nn.Linear(2, 64),
             nn.ReLU(),
@@ -102,9 +102,9 @@ class SCNConvDense(nn.Module):
 
 
 ######## SCN Conv+ShiftInvariant
-class SCNShiftInv(nn.Module):
+class HHNShiftInv(nn.Module):
     def __init__(self, dimensions, n_layers, n_units, n_channels, n_classes=10):
-        super(SCNShiftInv, self).__init__()
+        super(HHNShiftInv, self).__init__()
         self.hyper_stack = nn.Sequential(
             nn.Linear(2, 64),
             nn.ReLU(),

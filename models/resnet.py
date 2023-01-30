@@ -131,9 +131,9 @@ def ResNet152():
 
 ###############
 
-class SCN_ResNet18(nn.Module):
+class HHN_ResNet18(nn.Module):
     def __init__(self, D, hin, num_classes=10):
-        super(SCN_ResNet18, self).__init__()
+        super(HHN_ResNet18, self).__init__()
 
         self.D = D
         self.num_classes = num_classes

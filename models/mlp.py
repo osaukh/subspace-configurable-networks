@@ -47,7 +47,7 @@ class MLPB(nn.Module):
 
 
 ########################### SCN-MLPs no bias
-class SCN_MLP(nn.Module):
+class HHN_MLP(nn.Module):
     def __init__(self, hin, dimensions, n_layers, n_units, n_channels, n_classes=10):
         super(SCN_MLP, self).__init__()
         self.hyper_stack = nn.Sequential(
@@ -113,7 +113,7 @@ class SCN_MLP(nn.Module):
 
 
 ########################### SCN-MLPs with bias
-class SCN_MLPB(nn.Module):
+class HHN_MLPB(nn.Module):
     def __init__(self, hin, dimensions, n_layers, n_units, n_channels, n_classes=10):
         super(SCN_MLPB, self).__init__()
         self.hyper_stack = nn.Sequential(
