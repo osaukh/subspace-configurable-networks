@@ -1,8 +1,10 @@
 # subspace-configurable-networks
 
-The provided code was used to train SCN models and all baselines for the 2D transformations used in the paper 'Subspace-Configurable Networks'. 
+The provided code was used to train SCN models and all baselines for the 2D transformations used in the paper 'Subspace-Configurable Networks'.
 
-We used Python 3.7.7
+The easiest way to train an SCN model on rotation is by running the ipython notebook `SCN_Example_MLP_FMNIST_rotation.ipynb` in Google Colab.  
+
+Follow the instructions below to run the code from the command line. We used Python 3.7.7.
 
 Install dependencies:
 ```
