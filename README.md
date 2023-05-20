@@ -4,7 +4,7 @@ This repository contains the code that was used to train subspace-configurable n
 
 Also see the [interactive SCN's beta-subspace visualization page](https://subspace-configurable-networks.pages.dev) for all experiments in the paper.
 
-The easiest way to train an SCN model on rotation is by running the ipython notebook `SCN_Example_MLP_FMNIST_rotation.ipynb` in Google Colab. The file includes SCN training, testing, performance plot and visualization of the beta-subspace. 
+The easiest way to train an SCN model on rotation is by running the ipython notebook `SCN_MLP_FMNIST_rotation.ipynb` in Google Colab. The file includes SCN training, testing, performance plot and visualization of the beta-subspace. 
 
 Training SCNs takes from several minutes to several hours depending on the model size, the number of dimensions $D$ and the available resources.
 
