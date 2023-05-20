@@ -26,7 +26,6 @@ class SConv(nn.Module):
         for _ in range(n_layers-2):
             mid_layers.extend([
                 nn.Conv2d(n_units, n_units, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.BatchNorm2d(n_units, momentum=0.9),
                 nn.ReLU(inplace=True),
             ])
 
@@ -65,7 +64,6 @@ class SConvB(nn.Module):
         for _ in range(n_layers-2):
             mid_layers.extend([
                 nn.Conv2d(n_units, n_units, kernel_size=3, stride=1, padding=1),
-                nn.BatchNorm2d(n_units, momentum=0.9),
                 nn.ReLU(inplace=True),
             ])
 
@@ -111,9 +109,6 @@ class HHN_SConv(nn.Module):
 
         self.weight_list_conv1 = self.create_param_combination_conv(in_channels=n_channels,
                                                                     out_channels=n_units, kernel=9)
-
-        self.running_mu = torch.zeros(self.n_units).to(self.device)  # zeros are fine for first training iter
-        self.running_std = torch.ones(self.n_units).to(self.device)  # ones are fine for first training iter
 
         self.weight_and_biases = nn.ParameterList()
         for _ in range(n_layers - 2):
@@ -161,7 +156,6 @@ class HHN_SConv(nn.Module):
             w = nn.ParameterList(w)
             w = self.calculate_weighted_sum(w.to(self.device), hyper_output)
             logits = F.conv2d(logits, weight=w, stride=1, padding=1, bias=None)
-            logits = F.batch_norm(logits, self.running_mu, self.running_std, training=True, momentum=0.9)
             logits = torch.relu(logits)
 
         logits = F.conv2d(logits, weight=w_conv2, stride=1, padding=0, bias=None)
@@ -189,9 +183,6 @@ class HHN_SConvB(nn.Module):
         self.n_classes = n_classes
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.running_mu = torch.zeros(self.n_units).to(self.device)  # zeros are fine for first training iter
-        self.running_std = torch.ones(self.n_units).to(self.device)  # ones are fine for first training iter
 
         self.weight_list_conv1, self.bias_list_conv1 = \
             self.create_param_combination_conv(in_channels=n_channels,
@@ -267,7 +258,6 @@ class HHN_SConvB(nn.Module):
             w = self.calculate_weighted_sum(w.to(self.device), hyper_output)
             b = self.calculate_weighted_sum(b.to(self.device), hyper_output)
             logits = F.conv2d(logits, weight=w, bias=b, stride=1, padding=1)
-            logits = F.batch_norm(logits, self.running_mu, self.running_std, training=True, momentum=0.9)
             logits = torch.relu(logits)
 
         logits = F.conv2d(logits, weight=w_conv2, bias=b_conv2, stride=1, padding=0)

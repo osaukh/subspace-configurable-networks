@@ -1,10 +1,14 @@
 # subspace-configurable-networks
 
-The provided code was used to train SCN models and all baselines for the 2D transformations used in the paper 'Subspace-Configurable Networks'.
+This repository contains the code that was used to train subspace-configurable networks (SCNs) and all baselines for the 2D transformations used in the paper 'Representing Input Transformations by Low-Dimensional Parameter Subspaces'.
 
-The easiest way to train an SCN model on rotation is by running the ipython notebook `SCN_Example_MLP_FMNIST_rotation.ipynb` in Google Colab.  
+Also see the [interactive SCN's beta-subspace visualization page](https://subspace-configurable-networks.pages.dev) for all experiments in the paper.
 
-Follow the instructions below to run the code from the command line. We used Python 3.7.7.
+The easiest way to train an SCN model on rotation is by running the ipython notebook `SCN_Example_MLP_FMNIST_rotation.ipynb` in Google Colab. The file includes SCN training, testing, performance plot and visualization of the beta-subspace. 
+
+Training SCNs takes from several minutes to several hours depending on the model size, the number of dimensions $D$ and the available resources.
+
+Follow the instructions below to run the code from a command line. We used Python 3.7.7.
 
 Install dependencies:
 ```
@@ -28,7 +32,7 @@ python rotation_hhn.py \
 
 Replace `output` with the path to the output folder.
 
-To run the code to train the baselines (One4All, Inverse and One4One), the specified network architecture should be `mlpb`. The other parameter values are kept the same.
+To train the baselines (One4All, Inverse and One4One), the specified network architecture should be `mlpb`. The other parameter values are kept the same.
 
 ```
 CUDA_VISIBLE_DEVICES=0 \
@@ -43,7 +47,7 @@ python rotation_inverse.py \
 	--width=32
 ```
 
-Sample trained models and computed statistics are provided in the `output` folder part of this repository. The folder structure is straightforwards with folder names including the architecture, the dataset, number of layers, network widths and the number of dimensions $D$.
+Sample trained models and computed statistics are stored in the `output` folder part of this repository. The folder structure is straightforwards with folder names including the architecture, the dataset, number of layers, network widths and the number of dimensions $D$.
 
 You can use a sample plotting script to generate visualizations also presented in the paper:
 ```
@@ -62,3 +66,7 @@ SCN accuracy for different D, aggregated view for different D. Each violin compr
 SCN beta-space as a function of the input parameter alpha given as (cos(alpha), sin(alpha)):
 
 <img src="./figs/rotation/viz_beta_mlpb_FashionMNIST_1_32.png" alt="SCN beta-space, D=1..8, 1-layer MLP with 32 hidden units" width="800"/>
+
+The files `rotation_hhn_alpha_search.py` and `rotation_plot_alpha_search.py` provide implementation and testing of the invariant SCN (I-SCN) implementation via search in the alpha space. A simple example of the search for rotation and translation transformations is shown in the corresponding Google Colab files. Note that search in the alpha space is resource-intensive and takes hours for `bs=1`.
+
+Visit subfolders "Audio" and "3D" for our experiments with audio transformations and 3D rotation-and-projection.

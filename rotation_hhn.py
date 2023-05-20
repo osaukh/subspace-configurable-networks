@@ -30,6 +30,8 @@ parser.add_argument('--output', default='.', type=str)
 args = parser.parse_args()
 
 
+utils.set_seed(100)
+
 def transform_angle(angle):
     cos = math.cos(angle / 180 * math.pi)
     sin = math.sin(angle / 180 * math.pi)
@@ -55,7 +57,7 @@ def main():
 
     ######## prepare model structure
     model, save_dir = utils.prepare_model(args, nchannels, nclasses, hin=2)
-    wandb.init(project="SCN_rotation", entity="ahinea", name="SCN_%s" % save_dir)
+    wandb.init(project="SCN_rotation", entity="name", name="SCN_%s" % save_dir)
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))
@@ -169,7 +171,7 @@ def main():
     hhn_dict = {'acc': acc, 'acc_fixed': acc_fixed, 'beta_space': np.array(beta_space)}
 
     ######## write to the bucket
-    destination_name = f'{args.output}/rotation/SCN/{save_dir}'
+    destination_name = f'{args.output}/rotation/HHN/{save_dir}'
     os.makedirs(destination_name, exist_ok=True)
     np.save(f'{destination_name}/acc.npy', pickle.dumps(hhn_dict))
 

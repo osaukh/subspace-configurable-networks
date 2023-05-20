@@ -1,4 +1,5 @@
 import os
+import math
 import timeit
 import argparse
 import numpy as np
@@ -14,21 +15,21 @@ import wandb
 
 os.environ["WANDB_API_KEY"] = ""
 
-parser = argparse.ArgumentParser(description='SCN Project')
-parser.add_argument('--dataset', default='FashionMNIST', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
+parser = argparse.ArgumentParser(description='HHN Project')
+parser.add_argument('--dataset', default='CIFAR10', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
 parser.add_argument('--datadir', default='datasets', type=str)
 parser.add_argument('--batchsize', default=64, type=int)
 parser.add_argument('--save-dir', dest='save_dir', default='save_temp', type=str)
-parser.add_argument('--arch', '-a', metavar='ARCH', default='hhnmlpb')
+parser.add_argument('--arch', '-a', metavar='ARCH', default='mlp')
 parser.add_argument('--nlayers', default=1, type=int)
-parser.add_argument('--width', default=32, type=int)
+parser.add_argument('--width', default=1024, type=int)
 parser.add_argument('--epochs', default=10, type=int)
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--dimensions', default=3, type=int)
+parser.add_argument('--transform', default='brightness', type=str)
 parser.add_argument('--output', default='.', type=str)
 args = parser.parse_args()
 
-utils.set_seed(100)
 
 def main():
     start = timeit.default_timer()
@@ -48,8 +49,8 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=args.batchsize, shuffle=False, **kwargs)
 
     ######## prepare model structure
-    model, save_dir = utils.prepare_model(args, nchannels, nclasses, hin=2)
-    wandb.init(project="SCN_translation", entity="name", name="SCN_%s" % save_dir)
+    model, save_dir = utils.prepare_model(args, nchannels, nclasses, hin=1)
+    wandb.init(project="SCN_imgtrans", entity="name", name=f"SCN_{args.transform}_{save_dir}")
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))
@@ -63,17 +64,25 @@ def main():
 
     def train(dataloader, model, loss_fn, optimizer):
         for batch, (X, y) in enumerate(tqdm(dataloader, desc='Training')):
+            param = random.uniform(0.2, 2.0)
             X, y = X.to(device), y.to(device)
-            a, b = random.uniform(-8, 8), random.uniform(-8, 8)
-            X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+            if args.transform == "brightness":
+                X = TF.adjust_brightness(X, brightness_factor=param)
+            elif args.transform == "contrast":
+                X = TF.adjust_contrast(X, contrast_factor=param)
+            elif args.transform == "saturation":
+                X = TF.adjust_saturation(X, saturation_factor=param)
+            elif args.transform == "sharpness":
+                X = TF.adjust_sharpness(X, sharpness_factor=param)
+            Hyper_X = Tensor([param]).to(device)
 
-            pred = model(X, Tensor([a, b]).to(device))
+            pred = model(X, Hyper_X)
             loss = loss_fn(pred, y)
 
-            beta1 = model.hyper_stack(Tensor([a, b]).to(device))
-            a2, b2 = random.uniform(-8, 8), random.uniform(-8, 8)
-            beta2 = model.hyper_stack(Tensor([a2, b2]).to(device))
-            loss += 0.1*pow(cos(beta1, beta2),2)
+            beta1 = model.hyper_stack(Hyper_X)
+            param2 = random.uniform(0.2, 2.0)
+            beta2 = model.hyper_stack(Tensor([param2]).to(device))
+            loss += pow(cos(beta1, beta2),2)
 
             optimizer.zero_grad()
             loss.backward()
@@ -81,20 +90,28 @@ def main():
         scheduler.step()
 
     def validate(dataloader, model, loss_fn):
+        param = random.uniform(0.2, 2.0)
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                a, b = random.uniform(-8, 8), random.uniform(-8, 8)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                if args.transform == "brightness":
+                    X = TF.adjust_brightness(X, brightness_factor=param)
+                elif args.transform == "contrast":
+                    X = TF.adjust_contrast(X, contrast_factor=param)
+                elif args.transform == "saturation":
+                    X = TF.adjust_saturation(X, saturation_factor=param)
+                elif args.transform == "sharpness":
+                    X = TF.adjust_sharpness(X, sharpness_factor=param)
+                Hyper_X = Tensor([param]).to(device)
 
-                pred = model(X, Tensor([a, b]).to(device))
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /= len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with param={param}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct, test_loss
 
     for t in range(args.epochs):
@@ -105,55 +122,68 @@ def main():
     print("Done!")
 
     ######## test model
-    def test(dataloader, model, loss_fn, a, b):
+    def test(dataloader, model, loss_fn, param):
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                if args.transform == "brightness":
+                    X = TF.adjust_brightness(X, brightness_factor=param)
+                elif args.transform == "contrast":
+                    X = TF.adjust_contrast(X, contrast_factor=param)
+                elif args.transform == "saturation":
+                    X = TF.adjust_saturation(X, saturation_factor=param)
+                elif args.transform == "sharpness":
+                    X = TF.adjust_sharpness(X, sharpness_factor=param)
+                Hyper_X = Tensor([param]).to(device)
 
-                pred = model(X, Tensor([a, b]).to(device))
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /= len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with param={param}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct
 
     acc = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            acc.append(test(test_loader, model, loss_fn, a, b))
+    for param in tqdm(np.arange(0.2, 2, 0.05), desc='Testing'):
+        acc.append(test(test_loader, model, loss_fn, param))
 
     ######## test model fixed degree
-    def test_fixed(dataloader, model, loss_fn, a, b):
+    def test_fixed(dataloader, model, loss_fn, param):
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                if args.transform == "brightness":
+                    X = TF.adjust_brightness(X, brightness_factor=param)
+                elif args.transform == "contrast":
+                    X = TF.adjust_contrast(X, contrast_factor=param)
+                elif args.transform == "saturation":
+                    X = TF.adjust_saturation(X, saturation_factor=param)
+                elif args.transform == "sharpness":
+                    X = TF.adjust_sharpness(X, sharpness_factor=param)
+                Hyper_X = Tensor([1.0]).to(device) # fixed
 
-                pred = model(X, Tensor([0, 0]).to(device))  # fix the model
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /=  len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with param={param}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct
 
     acc_fixed = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            acc_fixed.append(test_fixed(test_loader, model, loss_fn, a, b))
+    for param in tqdm(np.arange(0.2, 2, 0.05), desc='Testing'):
+        acc_fixed.append(test_fixed(test_loader, model, loss_fn, param))
 
     ######## compute beta space
     beta_space = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            Hyper_X = Tensor([a, b]).to(device)
-            beta_space.append(model.hyper_stack(Hyper_X).cpu().detach().numpy())
+    for param in np.arange(0.2, 2, 0.05):
+        Hyper_X = Tensor([param]).to(device)
+        beta_space.append(model.hyper_stack(Hyper_X).cpu().detach().numpy())
 
     beta_space = np.stack(beta_space)
     print(beta_space.shape)
@@ -161,9 +191,11 @@ def main():
     hhn_dict = {'acc': acc, 'acc_fixed': acc_fixed, 'beta_space': np.array(beta_space)}
 
     ######## write to the bucket
-    destination_name = f'{args.output}/translation/HHN/{save_dir}'
+    destination_name = f'{args.output}/{args.transform}/HHN/{save_dir}'
     os.makedirs(destination_name, exist_ok=True)
     np.save(f'{destination_name}/acc.npy', pickle.dumps(hhn_dict))
+
+    # torch.save(model.state_dict(), f'{destination_name}/model.pt')
 
     stop = timeit.default_timer()
     print('Time: ', stop - start)

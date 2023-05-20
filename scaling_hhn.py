@@ -28,6 +28,7 @@ parser.add_argument('--dimensions', default=3, type=int)
 parser.add_argument('--output', default='.', type=str)
 args = parser.parse_args()
 
+utils.set_seed(100)
 
 def main():
     start = timeit.default_timer()
@@ -48,7 +49,7 @@ def main():
 
     ######## prepare model structure
     model, save_dir = utils.prepare_model(args, nchannels, nclasses, hin=1)
-    wandb.init(project="SCN_scaling", entity="ahinea", name="SCN_%s" % save_dir)
+    wandb.init(project="SCN_scaling", entity="name", name="SCN_%s" % save_dir)
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))
@@ -161,7 +162,7 @@ def main():
     hhn_dict = {'acc': acc, 'acc_fixed': acc_fixed, 'beta_space': np.array(beta_space)}
 
     ######## write to the bucket
-    destination_name = f'{args.output}/scaling/SCN/{save_dir}'
+    destination_name = f'{args.output}/scaling/HHN/{save_dir}'
     os.makedirs(destination_name, exist_ok=True)
     np.save(f'{destination_name}/acc.npy', pickle.dumps(hhn_dict))
 

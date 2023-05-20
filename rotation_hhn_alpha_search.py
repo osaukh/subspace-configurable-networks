@@ -1,4 +1,5 @@
 import os
+import math
 import timeit
 import argparse
 import numpy as np
@@ -9,26 +10,32 @@ from tqdm import tqdm
 import torch
 from torch import nn, Tensor
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 import wandb
 
 os.environ["WANDB_API_KEY"] = ""
 
 parser = argparse.ArgumentParser(description='SCN Project')
-parser.add_argument('--dataset', default='FashionMNIST', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
+parser.add_argument('--dataset', default='CIFAR10', type=str, help='MNIST | FashionMNIST | CIFAR10 | CIFAR100 | SVHN')
 parser.add_argument('--datadir', default='datasets', type=str)
 parser.add_argument('--batchsize', default=64, type=int)
 parser.add_argument('--save-dir', dest='save_dir', default='save_temp', type=str)
-parser.add_argument('--arch', '-a', metavar='ARCH', default='hhnmlpb')
+parser.add_argument('--arch', '-a', metavar='ARCH', default='mlp')
 parser.add_argument('--nlayers', default=1, type=int)
-parser.add_argument('--width', default=32, type=int)
+parser.add_argument('--width', default=1024, type=int)
 parser.add_argument('--epochs', default=10, type=int)
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--dimensions', default=3, type=int)
 parser.add_argument('--output', default='.', type=str)
 args = parser.parse_args()
 
-utils.set_seed(100)
+
+def transform_angle(angle):
+    cos = math.cos(angle / 180 * math.pi)
+    sin = math.sin(angle / 180 * math.pi)
+    return Tensor([cos, sin])
+
 
 def main():
     start = timeit.default_timer()
@@ -49,7 +56,7 @@ def main():
 
     ######## prepare model structure
     model, save_dir = utils.prepare_model(args, nchannels, nclasses, hin=2)
-    wandb.init(project="SCN_translation", entity="name", name="SCN_%s" % save_dir)
+    wandb.init(project="SCN_rotation", entity="name", name="SCN_alpha_%s" % save_dir)
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))
@@ -63,17 +70,27 @@ def main():
 
     def train(dataloader, model, loss_fn, optimizer):
         for batch, (X, y) in enumerate(tqdm(dataloader, desc='Training')):
+            angle = random.uniform(0, 360)
             X, y = X.to(device), y.to(device)
-            a, b = random.uniform(-8, 8), random.uniform(-8, 8)
-            X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+            X = TF.rotate(X, angle)
+            Hyper_X = transform_angle(angle).to(device)
 
-            pred = model(X, Tensor([a, b]).to(device))
+            pred = model(X, Hyper_X)
             loss = loss_fn(pred, y)
 
-            beta1 = model.hyper_stack(Tensor([a, b]).to(device))
-            a2, b2 = random.uniform(-8, 8), random.uniform(-8, 8)
-            beta2 = model.hyper_stack(Tensor([a2, b2]).to(device))
-            loss += 0.1*pow(cos(beta1, beta2),2)
+            beta1 = model.hyper_stack(Hyper_X)
+            angle2 = random.uniform(0, 360)
+            beta2 = model.hyper_stack(transform_angle(angle2).to(device))
+            loss += pow(cos(beta1, beta2),2)
+
+            # minimize entropy for the correct degree
+            b = (F.softmax(pred, dim=1)) * (-1 * F.log_softmax(pred, dim=1))
+            loss += 0.01 * b.sum()
+
+            # maximize entropy for the wrong degree
+            logits = model(X, hyper_x=transform_angle(angle2).to(device))
+            b2 = (F.softmax(logits, dim=1)) * (-1 * F.log_softmax(logits, dim=1))
+            loss -= 0.01 * b2.sum()
 
             optimizer.zero_grad()
             loss.backward()
@@ -81,20 +98,21 @@ def main():
         scheduler.step()
 
     def validate(dataloader, model, loss_fn):
+        angle = random.uniform(0, 360)
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                a, b = random.uniform(-8, 8), random.uniform(-8, 8)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                X = TF.rotate(X, angle)
+                Hyper_X = transform_angle(angle).to(device)
 
-                pred = model(X, Tensor([a, b]).to(device))
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /= len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with angle={angle}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct, test_loss
 
     for t in range(args.epochs):
@@ -105,55 +123,54 @@ def main():
     print("Done!")
 
     ######## test model
-    def test(dataloader, model, loss_fn, a, b):
+    def test(dataloader, model, loss_fn, angle):
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                X = TF.rotate(X, angle)
+                Hyper_X = transform_angle(angle).to(device)
 
-                pred = model(X, Tensor([a, b]).to(device))
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /= len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with angle={angle}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct
 
     acc = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            acc.append(test(test_loader, model, loss_fn, a, b))
+    for angle in tqdm(range(360), desc='Testing'):
+        acc.append(test(test_loader, model, loss_fn, angle))
 
     ######## test model fixed degree
-    def test_fixed(dataloader, model, loss_fn, a, b):
+    def test_fixed(dataloader, model, loss_fn, angle):
         model.eval()
         test_loss, correct = 0, 0
         with torch.no_grad():
             for X, y in dataloader:
                 X, y = X.to(device), y.to(device)
-                X = TF.affine(X, scale=1.0, angle=0, translate=(a, b), shear=0.0)
+                X = TF.rotate(X, angle)
+                Hyper_X = transform_angle(0).to(device)  # fixed accuracy 0
 
-                pred = model(X, Tensor([0, 0]).to(device))  # fix the model
+                pred = model(X, Hyper_X)
                 test_loss += loss_fn(pred, y).item()
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /=  len(dataloader)
         correct /= len(dataloader.dataset)
-        print(f"Test with translation={a,b}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
+        print(f"Test with angle={angle}: Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
         return correct
 
     acc_fixed = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            acc_fixed.append(test_fixed(test_loader, model, loss_fn, a, b))
+    for angle in tqdm(range(360), desc='Testing'):
+        acc_fixed.append(test_fixed(test_loader, model, loss_fn, angle))
 
     ######## compute beta space
     beta_space = []
-    for a in tqdm(np.linspace(-8, 8, 17), desc='Testing'):
-        for b in np.linspace(-8, 8, 17):
-            Hyper_X = Tensor([a, b]).to(device)
-            beta_space.append(model.hyper_stack(Hyper_X).cpu().detach().numpy())
+    for angle in range(360):
+        Hyper_X = transform_angle(angle).to(device)
+        beta_space.append(model.hyper_stack(Hyper_X).cpu().detach().numpy())
 
     beta_space = np.stack(beta_space)
     print(beta_space.shape)
@@ -161,9 +178,11 @@ def main():
     hhn_dict = {'acc': acc, 'acc_fixed': acc_fixed, 'beta_space': np.array(beta_space)}
 
     ######## write to the bucket
-    destination_name = f'{args.output}/translation/HHN/{save_dir}'
+    destination_name = f'{args.output}/rotation/HHN/{save_dir}'
     os.makedirs(destination_name, exist_ok=True)
-    np.save(f'{destination_name}/acc.npy', pickle.dumps(hhn_dict))
+    np.save(f'{destination_name}/acc_alpha.npy', pickle.dumps(hhn_dict))
+
+    torch.save(model.state_dict(), f'{destination_name}/model_alpha.pt')
 
     stop = timeit.default_timer()
     print('Time: ', stop - start)

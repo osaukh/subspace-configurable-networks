@@ -15,7 +15,7 @@ class MLP(nn.Module):
         for _ in range(n_layers-1):
             mid_layers.extend([
                 nn.Linear(n_units, n_units, bias=False),
-                nn.BatchNorm1d(n_units, momentum=0.9),
+                nn.BatchNorm1d(n_units),
                 nn.ReLU(),
             ])
         mid_layers.extend([nn.Linear(n_units, n_classes, bias=False)])
@@ -35,7 +35,7 @@ class MLPB(nn.Module):
         for _ in range(n_layers-1):
             mid_layers.extend([
                 nn.Linear(n_units, n_units),
-                nn.BatchNorm1d(n_units, momentum=0.9),
+                nn.BatchNorm1d(n_units),
                 nn.ReLU(),
             ])
         mid_layers.extend([nn.Linear(n_units, n_classes)])
@@ -65,9 +65,7 @@ class HHN_MLP(nn.Module):
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.running_mu = torch.zeros(self.n_units).to(self.device)  # zeros are fine for first training iter
-        self.running_std = torch.ones(self.n_units).to(self.device)  # ones are fine for first training iter
-
+        self.bns = []
 
         self.weight_list_fc1 = \
             self.create_param_combination_linear(in_features=32 * 32 * n_channels, out_features=n_units)
@@ -75,6 +73,7 @@ class HHN_MLP(nn.Module):
         for _ in range(n_layers - 1):
             w = self.create_param_combination_linear(in_features=n_units, out_features=n_units)
             self.weight_and_biases += w
+            self.bns.append(nn.BatchNorm1d(self.n_units).to(self.device))
 
         self.weight_list_fc2 = self.create_param_combination_linear(in_features=n_units, out_features=n_classes)
 
@@ -101,11 +100,11 @@ class HHN_MLP(nn.Module):
         logits = torch.relu(logits)
 
         it = iter(self.weight_and_biases)
-        for w in zip(*[it] * self.dimensions):
+        for (w, bn) in zip(zip(*[it] * self.dimensions), self.bns):
             w = nn.ParameterList(w)
             w = self.calculate_weighted_sum(w.to(self.device), hyper_output)
             logits = F.linear(logits, weight=w, bias=None)
-            logits = F.batch_norm(logits, self.running_mu, self.running_std, training=True, momentum=0.9)
+            logits = bn(logits)
             logits = torch.relu(logits)
 
         logits = F.linear(logits, weight=weight_fc2, bias=None)
@@ -131,8 +130,7 @@ class HHN_MLPB(nn.Module):
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.running_mu = torch.zeros(self.n_units).to(self.device)  # zeros are fine for first training iter
-        self.running_std = torch.ones(self.n_units).to(self.device)  # ones are fine for first training iter
+        self.bns = []
 
         self.weight_list_fc1, self.bias_list_fc1 = \
             self.create_param_combination_linear(in_features=32 * 32 * n_channels, out_features=n_units)
@@ -142,6 +140,7 @@ class HHN_MLPB(nn.Module):
             w, b = self.create_param_combination_linear(in_features=n_units, out_features=n_units)
             self.weights += w
             self.biases += b
+            self.bns.append(nn.BatchNorm1d(self.n_units).to(self.device))
         self.weight_list_fc2, self.bias_list_fc2 = self.create_param_combination_linear(in_features=n_units,
                                                                                         out_features=n_classes)
 
@@ -179,13 +178,13 @@ class HHN_MLPB(nn.Module):
 
         it_w = iter(self.weights)
         it_b = iter(self.biases)
-        for (w, b) in zip(zip(*[it_w] * self.dimensions), zip(*[it_b] * self.dimensions)):
+        for (w, b, bn) in zip(zip(*[it_w] * self.dimensions), zip(*[it_b] * self.dimensions), self.bns):
             w = nn.ParameterList(w)
             b = nn.ParameterList(b)
             w = self.calculate_weighted_sum(w.to(self.device), hyper_output)
             b = self.calculate_weighted_sum(b.to(self.device), hyper_output)
             logits = F.linear(logits, weight=w, bias=b)
-            logits = F.batch_norm(logits, self.running_mu, self.running_std, training=True, momentum=0.9)
+            logits = bn(logits)
             logits = torch.relu(logits)
 
         logits = F.linear(logits, weight=weight_fc2, bias=bias_fc2)
