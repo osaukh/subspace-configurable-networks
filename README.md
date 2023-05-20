@@ -67,6 +67,8 @@ SCN beta-space as a function of the input parameter alpha given as (cos(alpha), 
 
 <img src="./figs/rotation/viz_beta_mlpb_FashionMNIST_1_32.png" alt="SCN beta-space, D=1..8, 1-layer MLP with 32 hidden units" width="800"/>
 
+We also provide [videos navigating the beta-subspace](./videos/) for different $D$.
+
 The files `rotation_hhn_alpha_search.py` and `rotation_plot_alpha_search.py` provide implementation and testing of the invariant SCN (I-SCN) implementation via search in the alpha space. A simple example of the search for rotation and translation transformations is shown in the corresponding Google Colab files. Note that search in the alpha space is resource-intensive and takes hours for `bs=1`.
 
 Visit subfolders "Audio" and "3D" for our experiments with audio transformations and 3D rotation-and-projection.
