@@ -1,13 +1,16 @@
-# SCNs for audio transformations
+# SCN on audio transformations
 
-We applied pitchshift and speed change to the [SpeechCommands](https://www.tensorflow.org/datasets/catalog/speech_commands) dataset.
+We applied pitchshift and speed changes on the [SpeechCommands](https://www.tensorflow.org/datasets/catalog/speech_commands) dataste.
+
+
 
 
 ## Setup environment
 
-### Requirments
 
-- 3 GB space of disk, including 2.8 GB for the dataset.
+### Environment requirments
+
+- 3 GB space of disk, including 2.8 GB for dataset.
 - 12 GB GPU Memory 
 - Conda
 
@@ -21,7 +24,7 @@ conda install numpy matplotlib == 3.3.2 tqdm
 ```
 
 
-## How to train SCNs and baseline models
+## Train and evaluate models
 
 ### SCN
 
@@ -32,7 +35,7 @@ python audio_hhn.py --transform=speed --batchsize=256 --epochs=100 --output=./ou
 
 `transform` can be `pitchshift` or `speed`
 
-### One4One
+### one4one
 
 
 ``` Shell
@@ -42,7 +45,7 @@ python audio_one4one.py --transform=speed --batchsize=256 --epochs=100 --output=
 `transform` can be `pitchshift` or `speed`
 
 
-### One4All
+### one4all
 
 
 ``` Shell

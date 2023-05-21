@@ -1,4 +1,5 @@
 import os
+import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib as mpl
@@ -6,8 +7,15 @@ import matplotlib.patches as mpatches
 import numpy as np
 import pickle
 from matplotlib.ticker import StrMethodFormatter
+import argparse
 
-transform = "speed"
+parser = argparse.ArgumentParser(description='HHN Project')
+
+parser.add_argument('--transform', default="pitchshift", type=str)
+
+args = parser.parse_args()
+
+transform = args.transform
 
 output = "./"
 os.makedirs(f'{output}/figs/{transform}/', exist_ok=True)
@@ -98,5 +106,4 @@ def dacc(arch, dataset):
     plt.savefig(filename, bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
-    # dacc('mlpb', 'FashionMNIST', widths=[32], layers=[1])
     dacc('M5', 'SpeechCommands')

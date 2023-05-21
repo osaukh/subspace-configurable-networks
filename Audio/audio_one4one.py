@@ -2,7 +2,7 @@ import os
 import timeit
 import argparse
 import numpy as np
-
+from torch import nn
 import models
 import pickle
 from tqdm import tqdm
@@ -137,11 +137,49 @@ def main():
             print(f"\nTest accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
             return correct / len(test_loader.dataset), tloss / len(test_loader.dataset)
 
+        def deactivate_ema(model):
+            print("deactivate_ema")
+            for m in model.modules():
+                if isinstance(m, nn.BatchNorm1d):
+                    print(m)
+                    m.track_running_stats = False
+                    m._saved_running_mean, m.running_mean = m.running_mean, None
+                    m._saved_running_var, m.running_var = m.running_var, None
+
+        def activate_ema(model):
+            print("activate_ema")
+            for m in model.modules():
+                if isinstance(m, nn.BatchNorm1d):
+                    print(m)
+                    m.track_running_stats = True
+                    m.running_mean = m._saved_running_mean
+                    m.running_var = m._saved_running_var
+
+        def calculate_estimates(model, data_loader):
+            with torch.no_grad():
+                for X in tqdm(data_loader):
+                    data = X['waveform'].to(device)
+
+                    # apply transform with random parameter from a range
+                    if args.transform == "pitchshift":
+                        factors = torch.FloatTensor(2,1).uniform_(-10, 10) #for pitchshift
+                    if args.transform == "speed":
+                        factors = torch.FloatTensor(2,1).uniform_(0.1, 1.0) #for speed
+                    if args.transform == None:
+                        factors = torch.Tensor([1., 1.]).to(device) #for None
+                    data = transform_audio(transform_type= args.transform, waveform=data, sample_rate=16000, factor=factors[0], device=device)
+
+                    model(data)
+
+
         # The transform needs to live on the same device as the model and the data.
         # transform = transform.to(device)
         for epoch in range(args.epochs):
             print(f"=================\n Epoch: {epoch + 1} \n=================")
-            train(model, fixed_param)
+            deactivate_ema(model=model)
+            train(model,fixed_param)
+            activate_ema(model=model)
+            calculate_estimates(model=model, data_loader=train_loader)
             test_acc, test_loss = validate(model, fixed_param)
         print("Done!")
 
