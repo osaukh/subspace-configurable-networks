@@ -52,7 +52,7 @@ def main():
     for fixed_shift in fixed_shifts:
         ######## prepare model structure
         model, save_dir = utils.prepare_model(args, nchannels, nclasses)
-        wandb.init(project="HHN_translation", entity="ahinea", name="One4One_%d_%d_%s" % (fixed_shift[0], fixed_shift[1], save_dir))
+        wandb.init(project="HHN_translation", entity="name", name="One4One_%d_%d_%s" % (fixed_shift[0], fixed_shift[1], save_dir))
         model.to(device)
         print(model)
         print(utils.count_model_parameters(model))

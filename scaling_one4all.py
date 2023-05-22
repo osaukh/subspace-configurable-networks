@@ -48,7 +48,7 @@ def main():
 
     ######## prepare model structure
     model, save_dir = utils.prepare_model(args, nchannels, nclasses)
-    wandb.init(project="HHN_scaling", entity="ahinea", name="One4All_%s" % save_dir)
+    wandb.init(project="HHN_scaling", entity="name", name="One4All_%s" % save_dir)
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))

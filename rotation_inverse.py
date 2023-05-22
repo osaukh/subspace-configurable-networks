@@ -48,7 +48,7 @@ def main():
 
     ######## prepare model structure
     model, save_dir = utils.prepare_model(args, nchannels, nclasses)
-    wandb.init(project="SCN_rotation", entity="ahinea", name="Inverse_%s" % save_dir)
+    wandb.init(project="SCN_rotation", entity="name", name="Inverse_%s" % save_dir)
     model.to(device)
     print(model)
     print(utils.count_model_parameters(model))

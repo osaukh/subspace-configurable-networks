@@ -12,7 +12,7 @@ import pickle
 import utils
 from matplotlib.ticker import StrMethodFormatter
 
-output = "/Users/ahinea/subspace-configurable-networks"
+output = "/User/anonymous/subspace-configurable-networks"
 os.makedirs(f'{output}/figs/rotation/', exist_ok=True)
 
 

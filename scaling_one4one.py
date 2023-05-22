@@ -52,7 +52,7 @@ def main():
     for fixed_scale in fixed_scales:
         ######## prepare model structure
         model, save_dir = utils.prepare_model(args, nchannels, nclasses)
-        wandb.init(project="SCN_scaling", entity="ahinea", name="One4One_%.2f_%s" % (fixed_scale, save_dir))
+        wandb.init(project="SCN_scaling", entity="name", name="One4One_%.2f_%s" % (fixed_scale, save_dir))
         model.to(device)
         print(model)
         print(utils.count_model_parameters(model))

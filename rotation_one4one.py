@@ -52,7 +52,7 @@ def main():
     for fixed_angle in fixed_angles:
         ######## prepare model structure
         model, save_dir = utils.prepare_model(args, nchannels, nclasses)
-        wandb.init(project="SCN_rotation", entity="ahinea", name="One4One_%d_%s" % (fixed_angle, save_dir))
+        wandb.init(project="SCN_rotation", entity="name", name="One4One_%d_%s" % (fixed_angle, save_dir))
         model.to(device)
         print(model)
         print(utils.count_model_parameters(model))
