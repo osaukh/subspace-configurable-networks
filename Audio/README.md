@@ -1,4 +1,4 @@
-# SCN on audio transformations
+# SCN for audio transformations
 
 We applied pitchshift and speed change to the [SpeechCommands](https://www.tensorflow.org/datasets/catalog/speech_commands) dataset.
 
